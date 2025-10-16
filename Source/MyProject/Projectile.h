@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "NiagaraSystem.h"
+#include "NiagaraFunctionLibrary.h"
 #include "Projectile.generated.h"
 
 
@@ -21,7 +23,12 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	UFUNCTION() void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalIimpulse, const FHitResult& Hit);
+	UFUNCTION() 
+	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
+	UFUNCTION()
+	void OnProjectileStop(const FHitResult& Hit);
+
+	void SpawnImpactEffect(const FHitResult& Hit);
 
 	UPROPERTY(VisibleDefaultsOnly,Category=Projectile)
 	USphereComponent* CollisionComponent;
@@ -31,6 +38,13 @@ protected:
 	UStaticMeshComponent* ProjectileMeshComponent;
 	UPROPERTY(EditAnywhere,Category=Projectile)
 	float LifeSpan = 3.0f;
+	UPROPERTY(EditAnywhere, Category = "Effects")
+	UParticleSystem* HitEffect;
+	UPROPERTY(EditAnywhere, Category = "Effects")
+	UNiagaraSystem* HitNiagaraEffect;
+	UPROPERTY(EditAnywhere, Category = "Effects")
+	UMaterialInterface* HitDecal;
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

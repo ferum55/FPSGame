@@ -97,6 +97,7 @@ void AMainCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+
     // У BeginPlay:
     if (IsLocallyControlled())
     {

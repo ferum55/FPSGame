@@ -16,6 +16,5 @@ void AFPSHUD::DrawHUD() {
 		TileItem.BlendMode = SE_BLEND_Translucent;
 		Canvas->DrawItem(TileItem);
 	}
-	UE_LOG(LogTemp, Warning, TEXT("HUD Draw called"));
 
 }
