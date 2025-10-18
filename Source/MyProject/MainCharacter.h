@@ -17,11 +17,11 @@ class MYPROJECT_API AMainCharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
+	
 	AMainCharacter();
 
 protected:
-	// Called when the game starts or when spawned
+
 	virtual void BeginPlay() override;
 	UPROPERTY(EditDefaultsOnly, Category = "Character|Animation")
 	TSubclassOf<UAnimInstance> BodyAnimClass; 
@@ -45,10 +45,8 @@ protected:
 	TSubclassOf<class AProjectile> ProjectileClass;
 
 public:	
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	UFUNCTION() void MoveForward(float Value);
 	UFUNCTION() void MoveRight(float Value);

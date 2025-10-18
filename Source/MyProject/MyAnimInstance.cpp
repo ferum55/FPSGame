@@ -13,7 +13,6 @@ void UMyAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
         return;
     }
 
-    // Поточний pitch камери
     FRotator ControlRot = PawnOwner->GetControlRotation();
     AimPitch = FRotator::NormalizeAxis(ControlRot.Pitch);
 

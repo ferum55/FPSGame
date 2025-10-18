@@ -8,6 +8,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "UObject/ConstructorHelpers.h"
+#include "DrawDebugHelpers.h"
+
 #include "Projectile.h"
 #include "MyAnimInstance.h"
 
@@ -227,11 +229,36 @@ void AMainCharacter::OnJumpReleased()
 
 void AMainCharacter::Fire()
 {
-    /*FVector CameraLocation;
-    FRotator CameraRotation;
-    GetActorEyesViewPoint(CameraLocation, CameraRotation);*/
+    if (!ProjectileClass || !Camera)
+    {
+        return;
+    }
+
     FVector CameraLocation = Camera->GetComponentLocation();
     FRotator CameraRotation = Camera->GetComponentRotation();
+
+    FVector ShootDirection = CameraRotation.Vector();
+
+    FVector TraceStart = CameraLocation;
+    FVector TraceEnd = TraceStart + ShootDirection * 10000.0f;
+
+    FHitResult HitResult;
+    FCollisionQueryParams TraceParams;
+    TraceParams.AddIgnoredActor(this);
+    TraceParams.bTraceComplex = true;
+    TraceParams.bReturnPhysicalMaterial = false;
+
+    FVector TargetPoint;
+
+    if (GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, TraceParams))
+    {
+
+        TargetPoint = HitResult.ImpactPoint;
+    }
+    else
+    {
+        TargetPoint = TraceEnd;
+    }
 
     FVector MuzzleLocation = CameraLocation + FTransform(CameraRotation).TransformVector(MuzzleOffset);
     FRotator MuzzleRotation = CameraRotation;
@@ -240,13 +267,21 @@ void AMainCharacter::Fire()
     SpawnParams.Owner = this;
     SpawnParams.Instigator = GetInstigator();
     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
     AProjectile* Projectile = GetWorld()->SpawnActor<AProjectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
-    if (Projectile) {
-        FVector LaunchDirection = MuzzleRotation.Vector();
-        Projectile->FireInDirection(LaunchDirection);
+    if (Projectile)
+    {
+
+        FVector LaunchDirection = (TargetPoint - MuzzleLocation).GetSafeNormal();
+        Projectile->FireInDirection(LaunchDirection, TargetPoint);
     }
-    UE_LOG(LogTemp, Warning, TEXT("🔥 Fire pressed"));
+
+#if WITH_EDITOR
+
+    //DrawDebugLine(GetWorld(), TraceStart, TargetPoint, FColor::Red, false, 2.0f, 0, 0.5f);
+#endif
 
 }
+
 
 
