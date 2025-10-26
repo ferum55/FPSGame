@@ -269,7 +269,7 @@ void AMainCharacter::Fire()
     FRotator CameraRotation = Camera->GetComponentRotation();
     FVector ShootDirection = CameraRotation.Vector();
 
-    FVector MuzzleLocation = CameraLocation + CameraRotation.Vector() * 60.f + FTransform(CameraRotation).TransformVector(MuzzleOffset);
+    FVector MuzzleLocation = CameraLocation + CameraRotation.Vector() * 150.f + FTransform(CameraRotation).TransformVector(MuzzleOffset);
 
     FRotator MuzzleRotation = CameraRotation;
 

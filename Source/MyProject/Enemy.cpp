@@ -4,6 +4,7 @@
 #include "Components/ProgressBar.h"
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/CapsuleComponent.h"
 
 
 AEnemy::AEnemy()
@@ -42,7 +43,13 @@ void AEnemy::BeginPlay()
     for (AActor* P : Found)
         if (auto* TP = Cast<ASpawnEnemyTargetPoint>(P)) PatrolPoints.Add(TP);
 
-    UE_LOG(LogTemp, Warning, TEXT("Enemy %s PatrolPoints: %d"), *GetName(), PatrolPoints.Num());
+    UCapsuleComponent* Cap = GetCapsuleComponent();
+    UE_LOG(LogTemp, Warning, TEXT("Enemy capsule SimulatePhysics=%d, NotifyRigidBodyCollision=%d, CollisionEnabled=%d, ResponseToProjectile=%d"),
+        Cap->IsSimulatingPhysics(),
+        Cap->BodyInstance.bNotifyRigidBodyCollision,
+        (int)Cap->GetCollisionEnabled(),
+        (int)Cap->GetCollisionResponseToChannel(ECC_GameTraceChannel1));
+
 }
 
 void AEnemy::Tick(float DeltaSeconds)

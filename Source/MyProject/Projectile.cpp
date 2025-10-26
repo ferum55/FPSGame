@@ -2,6 +2,7 @@
 
 
 #include "Projectile.h"
+#include "Enemy.h"
 
 // Sets default values
 AProjectile::AProjectile()
@@ -31,7 +32,7 @@ AProjectile::AProjectile()
 
 	InitialLifeSpan = LifeSpan;
 	CollisionComponent->BodyInstance.SetCollisionProfileName(TEXT("Projectile"));
-	CollisionComponent->OnComponentHit.AddDynamic(this, &AProjectile::OnHit);
+	/*CollisionComponent->OnComponentHit.AddDynamic(this, &AProjectile::OnHit);*/
 	CollisionComponent->SetNotifyRigidBodyCollision(true);
 	CollisionComponent->BodyInstance.bUseCCD = true; // для швидких снарядів
 	CollisionComponent->SetCollisionResponseToAllChannels(ECR_Block);
@@ -42,13 +43,53 @@ AProjectile::AProjectile()
 void AProjectile::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	CollisionComponent->OnComponentHit.AddDynamic(this, &AProjectile::OnHit);
+
+	UE_LOG(LogTemp, Warning, TEXT("=== Projectile collision debug start ==="));
+	if (!CollisionComponent) {
+		UE_LOG(LogTemp, Error, TEXT("No CollisionComponent!"));
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("CollisionEnabled: %d"), (int)CollisionComponent->GetCollisionEnabled());
+	UE_LOG(LogTemp, Warning, TEXT("ObjectType: %d"), (int)CollisionComponent->GetCollisionObjectType());
+	UE_LOG(LogTemp, Warning, TEXT("NotifyRigidBodyCollision: %d"), CollisionComponent->BodyInstance.bNotifyRigidBodyCollision);
+	UE_LOG(LogTemp, Warning, TEXT("GenerateOverlapEvents: %d"), CollisionComponent->GetGenerateOverlapEvents());
+	UE_LOG(LogTemp, Warning, TEXT("SimulatePhysics: %d"), CollisionComponent->IsSimulatingPhysics());
+	UE_LOG(LogTemp, Warning, TEXT("Has OnComponentHit delegate: %d"), CollisionComponent->OnComponentHit.IsBound());
+	UE_LOG(LogTemp, Warning, TEXT("Collision profile name: %s"), *CollisionComponent->GetCollisionProfileName().ToString());
+
+	if (ProjectileMovementComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ProjectileMovement: SweepCollision=%d, ShouldBounce=%d, GravityScale=%f"),
+			ProjectileMovementComponent->bSweepCollision,
+			ProjectileMovementComponent->bShouldBounce,
+			ProjectileMovementComponent->ProjectileGravityScale);
+	}
+
+	// Перевір усі відповіді на канали
+	// Отримати всі відповіді на канали
+	FCollisionResponseContainer Responses = CollisionComponent->GetCollisionResponseToChannels();
+
+	UE_LOG(LogTemp, Warning, TEXT("Response to WorldStatic: %d"), Responses.GetResponse(ECC_WorldStatic));
+	UE_LOG(LogTemp, Warning, TEXT("Response to WorldDynamic: %d"), Responses.GetResponse(ECC_WorldDynamic));
+	UE_LOG(LogTemp, Warning, TEXT("Response to Pawn: %d"), Responses.GetResponse(ECC_Pawn));
+	UE_LOG(LogTemp, Warning, TEXT("Response to Visibility: %d"), Responses.GetResponse(ECC_Visibility));
+	UE_LOG(LogTemp, Warning, TEXT("Response to Projectile: %d"), Responses.GetResponse(ECC_GameTraceChannel1)); // якщо канал Projectile створений
+
+
+	UE_LOG(LogTemp, Warning, TEXT("=== End collision debug ==="));
 }
+
 
 // Called every frame
 void AProjectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	FVector Loc = GetActorLocation();
+	UE_LOG(LogTemp, VeryVerbose, TEXT("Projectile at: %s"), *Loc.ToString());
+
 
 }
 
@@ -57,6 +98,18 @@ void AProjectile::FireInDirection(const FVector& Direction) {
 }
 void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit) {
 	UE_LOG(LogTemp, Error, TEXT("ON HIT WAS CALLED! Target: %s"), OtherActor ? *OtherActor->GetName() : TEXT("NULL"));
+	if (OtherActor && OtherActor != this)
+	{
+		class AEnemy* Enemy = Cast<AEnemy>(OtherActor);
+		if (Enemy)
+		{
+			float OldHP = Enemy->GetHealth();
+			float Damage = 20.f; // або винеси в UPROPERTY(EditAnywhere)
+			Enemy->SetHealth(OldHP - Damage);
+
+			UE_LOG(LogTemp, Warning, TEXT("Hit enemy! HP: %.1f -> %.1f"), OldHP, Enemy->GetHealth());
+		}
+	}
 	static const float Impulse = 100.0f;
 	if (OtherActor != this && OtherComponent->IsSimulatingPhysics()) {
 		OtherComponent->AddImpulseAtLocation(ProjectileMovementComponent->Velocity * Impulse, Hit.ImpactPoint);
