@@ -9,8 +9,8 @@
 #include "GameFramework/PlayerController.h"
 #include "UObject/ConstructorHelpers.h"
 #include "DrawDebugHelpers.h"
-
-#include "Projectile.h"
+//
+//#include "Projectile.h"
 #include "MyAnimInstance.h"
 
 
@@ -42,7 +42,7 @@ AMainCharacter::AMainCharacter()
 
     // Завантажуємо анімаційний Blueprint
     static ConstructorHelpers::FClassFinder<UAnimInstance> AnimBPClass(
-        TEXT("/Game/AnimRetargeted/UE4ASP_HeroTPP_AnimBlueprint.UE4ASP_HeroTPP_AnimBlueprint_C")
+        TEXT("/Game/AnimRetargeted/BP_AnimMainCharacter.BP_AnimMainCharacter_C")
     );
     if (AnimBPClass.Succeeded())
     {
@@ -86,11 +86,22 @@ AMainCharacter::AMainCharacter()
     {
         WeaponClass = WeaponBP.Class;
     }
-    static ConstructorHelpers::FClassFinder<AProjectile> ProjectileBP(TEXT("/Game/FPS_Weapon_Bundle/BP_Projectile.BP_Projectile_C"));
+    static ConstructorHelpers::FClassFinder<AProjectile> ProjectileBP(TEXT("/Game/Projectile/BP_Projectile.BP_Projectile_C"));
     if (ProjectileBP.Succeeded())
     {
         ProjectileClass = ProjectileBP.Class;
     }
+
+    static ConstructorHelpers::FClassFinder<UmyHUD> HUD_BP(TEXT("/Game/UI/BP_HUD.BP_HUD_C"));
+    if (HUD_BP.Succeeded())
+    {
+        HUDClass = HUD_BP.Class;
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("❌ Failed to find BP_HUD at /Game/UI/BP_HUD.BP_HUD_C"));
+    }
+
 
 }
 
@@ -133,6 +144,19 @@ void AMainCharacter::BeginPlay()
         }
     }
 
+    if (HUDClass)
+    {
+        HUDWidget = CreateWidget<UmyHUD>(GetWorld(), HUDClass);
+        if (HUDWidget)
+        {
+            HUDWidget->AddToViewport();
+            UE_LOG(LogTemp, Warning, TEXT("HUD added to viewport"));
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("HUDWidget is null"));
+        }
+    }else UE_LOG(LogTemp, Error, TEXT("HUI"));
 
 
 }
@@ -164,8 +188,9 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
     PlayerInputComponent->BindAxis("Turn", this, &AMainCharacter::AddControllerYawInput);
     PlayerInputComponent->BindAxis("LookUp", this, &AMainCharacter::LookUp);
 
-    PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-    PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+    PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AMainCharacter::OnJumpPressed);
+    PlayerInputComponent->BindAction("Jump", IE_Released, this, &AMainCharacter::OnJumpReleased);
+
     PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &AMainCharacter::BeginCrouch);
     PlayerInputComponent->BindAction("Crouch", IE_Released, this, &AMainCharacter::EndCrouch);
     PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AMainCharacter::Fire);
@@ -220,47 +245,32 @@ void AMainCharacter::EndCrouch()
 void AMainCharacter::OnJumpPressed()
 {
     Jump();
+    JumpButtonDown = true;
 }
 
 void AMainCharacter::OnJumpReleased()
 {
     StopJumping();
+    JumpButtonDown = false;
 }
+
+
 
 void AMainCharacter::Fire()
 {
-    if (!ProjectileClass || !Camera)
+
+    if (Ammo <= 0)
     {
+        UE_LOG(LogTemp, Warning, TEXT("Out of ammo!"));
         return;
     }
 
     FVector CameraLocation = Camera->GetComponentLocation();
     FRotator CameraRotation = Camera->GetComponentRotation();
-
     FVector ShootDirection = CameraRotation.Vector();
 
-    FVector TraceStart = CameraLocation;
-    FVector TraceEnd = TraceStart + ShootDirection * 10000.0f;
+    FVector MuzzleLocation = CameraLocation + CameraRotation.Vector() * 60.f + FTransform(CameraRotation).TransformVector(MuzzleOffset);
 
-    FHitResult HitResult;
-    FCollisionQueryParams TraceParams;
-    TraceParams.AddIgnoredActor(this);
-    TraceParams.bTraceComplex = true;
-    TraceParams.bReturnPhysicalMaterial = false;
-
-    FVector TargetPoint;
-
-    if (GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, TraceParams))
-    {
-
-        TargetPoint = HitResult.ImpactPoint;
-    }
-    else
-    {
-        TargetPoint = TraceEnd;
-    }
-
-    FVector MuzzleLocation = CameraLocation + FTransform(CameraRotation).TransformVector(MuzzleOffset);
     FRotator MuzzleRotation = CameraRotation;
 
     FActorSpawnParameters SpawnParams;
@@ -271,17 +281,20 @@ void AMainCharacter::Fire()
     AProjectile* Projectile = GetWorld()->SpawnActor<AProjectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
     if (Projectile)
     {
-
-        FVector LaunchDirection = (TargetPoint - MuzzleLocation).GetSafeNormal();
-        Projectile->FireInDirection(LaunchDirection, TargetPoint);
+        /*UE_LOG(LogTemp, Warning, TEXT("Projectile Fired!"));*/
+        FVector LaunchDirection = MuzzleRotation.Vector();
+        Projectile->FireInDirection(LaunchDirection);
     }
 
-#if WITH_EDITOR
+    Ammo = FMath::Clamp(Ammo - 1, 0, MaxAmmo);
 
-    //DrawDebugLine(GetWorld(), TraceStart, TargetPoint, FColor::Red, false, 2.0f, 0, 0.5f);
-#endif
-
+    if (HUDWidget)
+    {
+        
+        HUDWidget->SetAmmo(Ammo);
+    }
 }
+
 
 
 

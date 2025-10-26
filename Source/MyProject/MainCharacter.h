@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "myHUD.h"
+#include "Projectile.h"
 #include "MainCharacter.generated.h"
 
 class UCameraComponent;
@@ -19,6 +21,7 @@ class MYPROJECT_API AMainCharacter : public ACharacter
 public:
 	
 	AMainCharacter();
+
 
 protected:
 
@@ -41,8 +44,32 @@ protected:
 
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	FVector MuzzleOffset;
+
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class AProjectile> ProjectileClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TSubclassOf<UmyHUD> HUDClass;
+
+	// Створений екземпляр HUD
+	UPROPERTY()
+	UmyHUD* HUDWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+	float Health = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+	float MaxHealth = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+	int32 Ammo = 30;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
+	int32 MaxAmmo = 30;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Animation")
+	bool JumpButtonDown;
+
 
 public:	
 	virtual void Tick(float DeltaTime) override;
