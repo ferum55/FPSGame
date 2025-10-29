@@ -21,10 +21,13 @@ public:
     UFUNCTION(BlueprintCallable)
     void SetHealth(float NewHealth);
     float GetHealth() const { return CurrentHealth; }
+    UFUNCTION(BlueprintImplementableEvent)
+    void PlayHitReaction_BP();
+
 
 protected:
     UPROPERTY(EditAnywhere, Category = "Movement")
-    float MoveSpeed = 0.f;
+    float MoveSpeed = 200.f;
 
     UPROPERTY(EditAnywhere, Category = "Stats")
     float MaxHealth = 100.f;

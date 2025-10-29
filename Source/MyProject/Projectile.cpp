@@ -45,41 +45,17 @@ void AProjectile::BeginPlay()
 	Super::BeginPlay();
 
 	CollisionComponent->OnComponentHit.AddDynamic(this, &AProjectile::OnHit);
-
-	UE_LOG(LogTemp, Warning, TEXT("=== Projectile collision debug start ==="));
 	if (!CollisionComponent) {
 		UE_LOG(LogTemp, Error, TEXT("No CollisionComponent!"));
 		return;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("CollisionEnabled: %d"), (int)CollisionComponent->GetCollisionEnabled());
-	UE_LOG(LogTemp, Warning, TEXT("ObjectType: %d"), (int)CollisionComponent->GetCollisionObjectType());
-	UE_LOG(LogTemp, Warning, TEXT("NotifyRigidBodyCollision: %d"), CollisionComponent->BodyInstance.bNotifyRigidBodyCollision);
-	UE_LOG(LogTemp, Warning, TEXT("GenerateOverlapEvents: %d"), CollisionComponent->GetGenerateOverlapEvents());
-	UE_LOG(LogTemp, Warning, TEXT("SimulatePhysics: %d"), CollisionComponent->IsSimulatingPhysics());
-	UE_LOG(LogTemp, Warning, TEXT("Has OnComponentHit delegate: %d"), CollisionComponent->OnComponentHit.IsBound());
-	UE_LOG(LogTemp, Warning, TEXT("Collision profile name: %s"), *CollisionComponent->GetCollisionProfileName().ToString());
-
-	if (ProjectileMovementComponent)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ProjectileMovement: SweepCollision=%d, ShouldBounce=%d, GravityScale=%f"),
-			ProjectileMovementComponent->bSweepCollision,
-			ProjectileMovementComponent->bShouldBounce,
-			ProjectileMovementComponent->ProjectileGravityScale);
-	}
 
 	// Перевір усі відповіді на канали
 	// Отримати всі відповіді на канали
 	FCollisionResponseContainer Responses = CollisionComponent->GetCollisionResponseToChannels();
 
-	UE_LOG(LogTemp, Warning, TEXT("Response to WorldStatic: %d"), Responses.GetResponse(ECC_WorldStatic));
-	UE_LOG(LogTemp, Warning, TEXT("Response to WorldDynamic: %d"), Responses.GetResponse(ECC_WorldDynamic));
-	UE_LOG(LogTemp, Warning, TEXT("Response to Pawn: %d"), Responses.GetResponse(ECC_Pawn));
-	UE_LOG(LogTemp, Warning, TEXT("Response to Visibility: %d"), Responses.GetResponse(ECC_Visibility));
-	UE_LOG(LogTemp, Warning, TEXT("Response to Projectile: %d"), Responses.GetResponse(ECC_GameTraceChannel1)); // якщо канал Projectile створений
-
-
-	UE_LOG(LogTemp, Warning, TEXT("=== End collision debug ==="));
+	
 }
 
 
