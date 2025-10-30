@@ -1,4 +1,5 @@
 #include "myHUD.h"
+#include "Components/TextBlock.h"
 #include "Components/ProgressBar.h"
 
 void UmyHUD::SetAmmo(int32 CurrentAmmo)
@@ -8,11 +9,19 @@ void UmyHUD::SetAmmo(int32 CurrentAmmo)
         UE_LOG(LogTemp, Error, TEXT("? AmmoBar is null in HUD!"));
         return;
     }
-
+    if (AmmoText)
+    {
+        AmmoText->SetText(FText::AsNumber(CurrentAmmo));
+        UE_LOG(LogTemp, Warning, TEXT("Ammo updated: %d"), CurrentAmmo);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("AmmoText is NULL"));
+    }
     float Percent = FMath::Clamp((float)CurrentAmmo / 30.0f, 0.f, 1.f);
     AmmoBar->SetPercent(Percent);
 
-   /* UE_LOG(LogTemp, Warning, TEXT("? SetAmmo updated bar to %.2f"), Percent);*/
+
 }
 
 void UmyHUD::SetHealth(float CurrentHealth)
@@ -23,15 +32,16 @@ void UmyHUD::SetHealth(float CurrentHealth)
         return;
     }
 
-    float Percent = FMath::Clamp(CurrentHealth / 100.f, 0.f, 1.f);
+    float Percent = FMath::Clamp(CurrentHealth, 0.f, 1.f);
     HealthBar->SetPercent(Percent);
 
-    // плавна зміна кольору: червоний ? зелений
-    FLinearColor FullColor = FLinearColor(0.f, 1.f, 0.f, 1.f);
-    FLinearColor LowColor = FLinearColor(1.f, 0.f, 0.f, 1.f);
+    // 100% = зелений, 0% = червоний
+    FLinearColor FullColor = FLinearColor(0.f, 1.f, 0.f, 1.f);   // зелений
+    FLinearColor LowColor = FLinearColor(1.f, 0.f, 0.f, 1.f);   // червоний
     FLinearColor NewColor = FMath::Lerp(LowColor, FullColor, Percent);
 
     HealthBar->SetFillColorAndOpacity(NewColor);
 
     UE_LOG(LogTemp, Warning, TEXT("? SetHealth updated bar to %.2f"), Percent);
 }
+

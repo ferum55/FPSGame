@@ -18,9 +18,13 @@ public:
     UFUNCTION(BlueprintCallable, Category = "UI")
     void SetHealth(float CurrentHealth);
 
+
 protected:
     UPROPERTY(meta = (BindWidget))
     class UProgressBar* AmmoBar;
+    UPROPERTY(meta = (BindWidget))
+    class UTextBlock* AmmoText;
+
 
     // --- додаємо ще один ProgressBar ---
     UPROPERTY(meta = (BindWidget))

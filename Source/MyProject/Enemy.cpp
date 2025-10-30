@@ -78,9 +78,6 @@ void AEnemy::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
 
-    UE_LOG(LogTemp, Warning, TEXT("[Enemy] Tick: Attacking=%d CanAttack=%d Speed=%.1f"),
-        bIsAttacking ? 1 : 0, bCanAttack ? 1 : 0, GetVelocity().Size());
-
     if (!bIsAttacking)                     // <-- стопимо патруль під час атаки
         MoveAlongPatrol(DeltaSeconds);
 
@@ -88,7 +85,6 @@ void AEnemy::Tick(float DeltaSeconds)
     if (PlayerPawn)
     {
         float Dist = FVector::Dist(GetActorLocation(), PlayerPawn->GetActorLocation());
-        UE_LOG(LogTemp, Warning, TEXT("[Enemy] DistToPlayer=%.1f"), Dist);
 
         if (Dist <= AttackRange && bCanAttack && !bIsAttacking) // не тригерити атаку, якщо вже атакуємо
             TryAttack();

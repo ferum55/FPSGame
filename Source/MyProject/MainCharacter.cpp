@@ -309,6 +309,14 @@ float AMainCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 
     Health -= Actual;
     UE_LOG(LogTemp, Warning, TEXT("Player took %.1f damage. HP = %.1f"), Actual, Health);
+    Camera->PostProcessSettings.bOverride_SceneColorTint = true;
+    Camera->PostProcessSettings.SceneColorTint = FLinearColor(1.f, 0.f, 0.f, 1.f); // червоний відтінок
+
+    FTimerHandle ClearTintHandle;
+    GetWorldTimerManager().SetTimer(ClearTintHandle, [this]()
+        {
+            Camera->PostProcessSettings.SceneColorTint = FLinearColor(1.f, 1.f, 1.f, 1.f); // назад до білого
+        }, 0.1f, false);
 
     if (HUDWidget)
         HUDWidget->SetHealth(Health / MaxHealth);
