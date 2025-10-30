@@ -62,13 +62,19 @@ protected:
 
     UPROPERTY(EditAnywhere, Category = "Combat")
     float ProjectileSpeed = 1000.f;
+    UPROPERTY(EditAnywhere, Category = "Animation")
+    UAnimSequence* DeathAnim;
+
 
     bool bCanAttack = true;
+    bool bIsAttacking = false;
+
     FTimerHandle AttackCooldownHandle;
 
     void TryAttack();
     void PerformAttack();
     void ResetAttack();
     void SpawnProjectileAtPlayer();
+
 
 };
