@@ -17,16 +17,14 @@
 // Sets default values
 AMainCharacter::AMainCharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-    // Тіло персонажа
+
     GetMesh()->SetupAttachment(GetCapsuleComponent());
     GetMesh()->SetRelativeLocation(FVector(0.f, 0.f, -88.f));
     GetMesh()->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
     GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-    // Завантажуємо модель тіла (Mannequin)
     static ConstructorHelpers::FObjectFinder<USkeletalMesh> BodyMeshRef(
         TEXT("/Game/Mannequin/Character/Mesh/SK_Mannequin.SK_Mannequin")
     );
@@ -40,7 +38,6 @@ AMainCharacter::AMainCharacter()
         UE_LOG(LogTemp, Error, TEXT("❌ Body mesh not found"));
     }
 
-    // Завантажуємо анімаційний Blueprint
     static ConstructorHelpers::FClassFinder<UAnimInstance> AnimBPClass(
         TEXT("/Game/AnimRetargeted/BP_AnimMainCharacter.BP_AnimMainCharacter_C")
     );
@@ -55,17 +52,14 @@ AMainCharacter::AMainCharacter()
         UE_LOG(LogTemp, Error, TEXT("❌ Failed to load AnimBlueprint"));
     }
 
-    // ---------- FP_Mesh (видимий тільки гравцю) ----------
     FP_Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FP_Mesh"));
     FP_Mesh->SetupAttachment(GetMesh());
     FP_Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-    // видно лише локальному гравцю
     FP_Mesh->SetOnlyOwnerSee(true);
     FP_Mesh->bCastHiddenShadow = false;
     FP_Mesh->CastShadow = false;
 
-    // копіюємо сітку й анімацію з основного Mesh
     FP_Mesh->SetSkeletalMesh(GetMesh()->SkeletalMesh);
     FP_Mesh->SetAnimInstanceClass(GetMesh()->AnimClass);
 
@@ -80,7 +74,7 @@ AMainCharacter::AMainCharacter()
     GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
     GetCharacterMovement()->bCrouchMaintainsBaseLocation = true;
     static ConstructorHelpers::FClassFinder<AActor> WeaponBP(
-        TEXT("/Game/FPS_Weapon_Bundle/BP_KA74U.BP_KA74U_C") // ⚠️ твій реальний шлях до Blueprint зброї
+        TEXT("/Game/FPS_Weapon_Bundle/BP_KA74U.BP_KA74U_C") 
     );
     if (WeaponBP.Succeeded())
     {
@@ -104,20 +98,17 @@ AMainCharacter::AMainCharacter()
 
 }
 
-// Called when the game starts or when spawned
+
 void AMainCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-
-    // У BeginPlay:
     if (IsLocallyControlled())
     {
-        // Голову не показуємо на екрані
+
         FP_Mesh->HideBoneByName(TEXT("head"), EPhysBodyOp::PBO_None);
         FP_Mesh->HideBoneByName(TEXT("neck_01"), EPhysBodyOp::PBO_None);
 
-        // Але залишаємо тінь
         GetMesh()->CastShadow = true;
         GetMesh()->bCastHiddenShadow = true;
         GetMesh()->SetOwnerNoSee(true);
@@ -129,16 +120,15 @@ void AMainCharacter::BeginPlay()
         SpawnParams.Owner = this;
         SpawnParams.Instigator = this;
 
-        // Створюємо зброю
         CurrentWeapon = GetWorld()->SpawnActor<AActor>(WeaponClass, SpawnParams);
 
         if (CurrentWeapon)
         {
-            // Прикріплюємо до сокета на FP_Mesh (або GetMesh, залежно від вигляду)
+ 
             CurrentWeapon->AttachToComponent(
                 FP_Mesh,
                 FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-                TEXT("weapon_socket") // назва твого сокета
+                TEXT("weapon_socket") 
             );
         }
     }
@@ -310,12 +300,12 @@ float AMainCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
     Health -= Actual;
     UE_LOG(LogTemp, Warning, TEXT("Player took %.1f damage. HP = %.1f"), Actual, Health);
     Camera->PostProcessSettings.bOverride_SceneColorTint = true;
-    Camera->PostProcessSettings.SceneColorTint = FLinearColor(1.f, 0.f, 0.f, 1.f); // червоний відтінок
+    Camera->PostProcessSettings.SceneColorTint = FLinearColor(1.f, 0.f, 0.f, 1.f); 
 
     FTimerHandle ClearTintHandle;
     GetWorldTimerManager().SetTimer(ClearTintHandle, [this]()
         {
-            Camera->PostProcessSettings.SceneColorTint = FLinearColor(1.f, 1.f, 1.f, 1.f); // назад до білого
+            Camera->PostProcessSettings.SceneColorTint = FLinearColor(1.f, 1.f, 1.f, 1.f); 
         }, 0.1f, false);
 
     if (HUDWidget)

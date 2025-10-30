@@ -50,8 +50,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TSubclassOf<UmyHUD> HUDClass;
-
-	// Створений екземпляр HUD
 	UPROPERTY()
 	UmyHUD* HUDWidget;
 

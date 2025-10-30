@@ -34,10 +34,8 @@ void UmyHUD::SetHealth(float CurrentHealth)
 
     float Percent = FMath::Clamp(CurrentHealth, 0.f, 1.f);
     HealthBar->SetPercent(Percent);
-
-    // 100% = зелений, 0% = червоний
-    FLinearColor FullColor = FLinearColor(0.f, 1.f, 0.f, 1.f);   // зелений
-    FLinearColor LowColor = FLinearColor(1.f, 0.f, 0.f, 1.f);   // червоний
+    FLinearColor FullColor = FLinearColor(0.f, 1.f, 0.f, 1.f);  
+    FLinearColor LowColor = FLinearColor(1.f, 0.f, 0.f, 1.f);   
     FLinearColor NewColor = FMath::Lerp(LowColor, FullColor, Percent);
 
     HealthBar->SetFillColorAndOpacity(NewColor);

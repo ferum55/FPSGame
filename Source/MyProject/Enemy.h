@@ -20,8 +20,6 @@ public:
 
     virtual void Tick(float DeltaTime) override;
     virtual void BeginPlay() override;
-
-    // --- ַהמנמג’ÿ ---
     UFUNCTION(BlueprintCallable)
     void SetHealth(float NewHealth);
     float GetHealth() const { return CurrentHealth; }
@@ -46,11 +44,9 @@ protected:
 
     void MoveAlongPatrol(float DeltaTime);
 
-    // --- ֲ³הזוע ---
     UPROPERTY(VisibleAnywhere, Category = "UI")
     UWidgetComponent* HealthBarWidget;
 
-    // --- Combat ---
     UPROPERTY(EditAnywhere, Category = "Combat")
     TSubclassOf<AProjectile> ProjectileClass;
 

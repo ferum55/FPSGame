@@ -49,7 +49,6 @@ void AEnemy::BeginPlay()
 
     GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
 
-    // Якщо є клас віджета у Blueprint
     if (UUserWidget* Widget = HealthBarWidget->GetUserWidgetObject())
     {
         if (UProgressBar* Bar = Cast<UProgressBar>(Widget->GetWidgetFromName(TEXT("EnemyHealth"))))
@@ -59,18 +58,12 @@ void AEnemy::BeginPlay()
     }
 
 
-    // Патруль
     TArray<AActor*> Found;
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), ASpawnEnemyTargetPoint::StaticClass(), Found);
     for (AActor* P : Found)
         if (auto* TP = Cast<ASpawnEnemyTargetPoint>(P)) PatrolPoints.Add(TP);
 
-    UCapsuleComponent* Cap = GetCapsuleComponent();
-    /*UE_LOG(LogTemp, Warning, TEXT("Enemy capsule SimulatePhysics=%d, NotifyRigidBodyCollision=%d, CollisionEnabled=%d, ResponseToProjectile=%d"),
-        Cap->IsSimulatingPhysics(),
-        Cap->BodyInstance.bNotifyRigidBodyCollision,
-        (int)Cap->GetCollisionEnabled(),
-        (int)Cap->GetCollisionResponseToChannel(ECC_GameTraceChannel1));*/
+
 
 }
 
@@ -78,7 +71,7 @@ void AEnemy::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
 
-    if (!bIsAttacking)                     // <-- стопимо патруль під час атаки
+    if (!bIsAttacking)                     
         MoveAlongPatrol(DeltaSeconds);
 
     APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
@@ -86,7 +79,7 @@ void AEnemy::Tick(float DeltaSeconds)
     {
         float Dist = FVector::Dist(GetActorLocation(), PlayerPawn->GetActorLocation());
 
-        if (Dist <= AttackRange && bCanAttack && !bIsAttacking) // не тригерити атаку, якщо вже атакуємо
+        if (Dist <= AttackRange && bCanAttack && !bIsAttacking) 
             TryAttack();
     }
 }
@@ -133,27 +126,16 @@ void AEnemy::SetHealth(float NewHealth)
     }
 
 
-    if (USkeletalMeshComponent* MeshComp = GetMesh())
-    {
-        /*if (!(UAnimInstance* Anim = MeshComp->GetAnimInstance()))
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Enemy has NO AnimInstance!"));
-        }*/
-    }
-
-
-    UE_LOG(LogTemp, Warning, TEXT("SetHealth called. Old=%.1f New=%.1f"), OldHealth, CurrentHealth);
-
     if (CurrentHealth > 0.f)
     {
-        PlayHitReaction_BP();          // звичайна реакція
+        PlayHitReaction_BP();          
     }
     else
     {
         if (UAnimInstance* Anim = GetMesh()->GetAnimInstance())
         {
-            Anim->Montage_Stop(0.1f);  // зупинити всі інші анімації
-            GetMesh()->PlayAnimation(DeathAnim, false); // ? DeathAnim = Enemy_Death
+            Anim->Montage_Stop(0.1f); 
+            GetMesh()->PlayAnimation(DeathAnim, false); 
         }
 
         GetCharacterMovement()->DisableMovement();
@@ -170,13 +152,12 @@ void AEnemy::SetHealth(float NewHealth)
 
 void AEnemy::TryAttack()
 {
-    UE_LOG(LogTemp, Warning, TEXT("[Enemy] TryAttack()"));
-    bIsAttacking = true;            // <-- додати
+    bIsAttacking = true;           
     bCanAttack = false;
 
     GetCharacterMovement()->StopMovementImmediately();
     GetCharacterMovement()->MaxWalkSpeed = 0.f;
-    GetCharacterMovement()->bOrientRotationToMovement = false; // щоб не крутило за вектором руху
+    GetCharacterMovement()->bOrientRotationToMovement = false; 
 
     if (APawn* P = UGameplayStatics::GetPlayerPawn(this, 0))
     {
@@ -191,10 +172,8 @@ void AEnemy::TryAttack()
 
 void AEnemy::PerformAttack()
 {
-    // Зупинка руху
     GetCharacterMovement()->StopMovementImmediately();
 
-    // Поворот у бік гравця
     APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
     if (PlayerPawn)
     {
@@ -203,17 +182,14 @@ void AEnemy::PerformAttack()
         SetActorRotation(Dir.Rotation());
     }
 
-    // Активуємо стан атаки в AnimBP
     if (UAnimInstance* Anim = GetMesh()->GetAnimInstance())
     {
         FBoolProperty* Prop = FindFProperty<FBoolProperty>(Anim->GetClass(), FName("IsAttacking"));
         if (Prop) Prop->SetPropertyValue_InContainer(Anim, true);
     }
 
-    // Затримка перед пострілом (синхрон із анімацією)
     GetWorldTimerManager().SetTimerForNextTick(this, &AEnemy::SpawnProjectileAtPlayer);
 
-    // Через короткий час повертаємо Idle
     FTimerHandle ResetAnimHandle;
     GetWorldTimerManager().SetTimer(ResetAnimHandle, [this]()
         {
@@ -222,15 +198,14 @@ void AEnemy::PerformAttack()
                 FBoolProperty* Prop = FindFProperty<FBoolProperty>(Anim->GetClass(), FName("IsAttacking"));
                 if (Prop) Prop->SetPropertyValue_InContainer(Anim, false);
             }
-        }, 0.9f, false); // тривалість атаки
+        }, 0.9f, false); 
 }
 
 
 void AEnemy::ResetAttack()
 {
-    UE_LOG(LogTemp, Warning, TEXT("[Enemy] ResetAttack()"));
     bCanAttack = true;
-    bIsAttacking = false;                          // <-- додати
+    bIsAttacking = false;                         
     GetCharacterMovement()->bOrientRotationToMovement = true;
     GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
 }
