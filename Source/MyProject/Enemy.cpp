@@ -1,4 +1,5 @@
 #include "Enemy.h"
+#include "Projectile.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/WidgetComponent.h"
 #include "Components/ProgressBar.h"
@@ -39,7 +40,6 @@ void AEnemy::BeginPlay()
     if (!Controller)
     {
         SpawnDefaultController();
-        UE_LOG(LogTemp, Warning, TEXT("Controller spawned for enemy."));
     }
     else
     {
@@ -47,7 +47,6 @@ void AEnemy::BeginPlay()
     }
 
     GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
-    UE_LOG(LogTemp, Warning, TEXT("Enemy MoveSpeed applied = %.1f"), MoveSpeed);
 
     // Якщо є клас віджета у Blueprint
     if (UUserWidget* Widget = HealthBarWidget->GetUserWidgetObject())
@@ -65,11 +64,11 @@ void AEnemy::BeginPlay()
         if (auto* TP = Cast<ASpawnEnemyTargetPoint>(P)) PatrolPoints.Add(TP);
 
     UCapsuleComponent* Cap = GetCapsuleComponent();
-    UE_LOG(LogTemp, Warning, TEXT("Enemy capsule SimulatePhysics=%d, NotifyRigidBodyCollision=%d, CollisionEnabled=%d, ResponseToProjectile=%d"),
+    /*UE_LOG(LogTemp, Warning, TEXT("Enemy capsule SimulatePhysics=%d, NotifyRigidBodyCollision=%d, CollisionEnabled=%d, ResponseToProjectile=%d"),
         Cap->IsSimulatingPhysics(),
         Cap->BodyInstance.bNotifyRigidBodyCollision,
         (int)Cap->GetCollisionEnabled(),
-        (int)Cap->GetCollisionResponseToChannel(ECC_GameTraceChannel1));
+        (int)Cap->GetCollisionResponseToChannel(ECC_GameTraceChannel1));*/
 
 }
 
@@ -77,7 +76,17 @@ void AEnemy::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
     MoveAlongPatrol(DeltaSeconds);
-    FVector Vel = GetVelocity();
+
+    APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
+    if (PlayerPawn)
+    {
+        float Dist = FVector::Dist(GetActorLocation(), PlayerPawn->GetActorLocation());
+        if (Dist <= AttackRange && bCanAttack)
+            TryAttack();
+    }
+
+
+    /*FVector Vel = GetVelocity();
     float Speed = Vel.Size();
 
     UE_LOG(LogTemp, Warning, TEXT("Enemy speed: %.1f"), Speed);
@@ -92,7 +101,7 @@ void AEnemy::Tick(float DeltaSeconds)
         {
             UE_LOG(LogTemp, Warning, TEXT("No AnimInstance on Mesh!"));
         }
-    }
+    }*/
 }
 
 void AEnemy::MoveAlongPatrol(float DeltaSeconds)
@@ -115,10 +124,6 @@ void AEnemy::MoveAlongPatrol(float DeltaSeconds)
     }
 
     Dir.Normalize();
-    UE_LOG(LogTemp, Warning, TEXT("Dir: %s"), *Dir.ToString());
-
-
-    UE_LOG(LogTemp, Warning, TEXT("Moving to target %s"), *Target->GetName());
 
     AddMovementInput(Dir, 1.0f);
 
@@ -134,15 +139,10 @@ void AEnemy::SetHealth(float NewHealth)
 
     if (USkeletalMeshComponent* MeshComp = GetMesh())
     {
-        if (UAnimInstance* Anim = MeshComp->GetAnimInstance())
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Enemy AnimInstance: %s"),
-                *Anim->GetClass()->GetName());
-        }
-        else
+        /*if (!(UAnimInstance* Anim = MeshComp->GetAnimInstance()))
         {
             UE_LOG(LogTemp, Warning, TEXT("Enemy has NO AnimInstance!"));
-        }
+        }*/
     }
 
 
@@ -159,4 +159,47 @@ void AEnemy::SetHealth(float NewHealth)
         Destroy();
     }
 }
+
+void AEnemy::TryAttack()
+{
+    bCanAttack = false;
+    PerformAttack();
+    GetWorldTimerManager().SetTimer(AttackCooldownHandle, this, &AEnemy::ResetAttack, AttackCooldown, false);
+}
+
+void AEnemy::ResetAttack()
+{
+    bCanAttack = true;
+}
+
+void AEnemy::PerformAttack()
+{
+    SpawnProjectileAtPlayer();
+}
+
+void AEnemy::SpawnProjectileAtPlayer()
+{
+    if (!ProjectileClass) return;
+
+    APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
+    if (!PlayerPawn) return;
+
+    FVector Start = GetActorLocation() + GetActorForwardVector() * 80.f + FVector(0, 0, 50.f);
+    FRotator Rot = (PlayerPawn->GetActorLocation() - Start).Rotation();
+
+    FActorSpawnParameters Params;
+    Params.Owner = this;
+    Params.Instigator = this;
+
+    AProjectile* P = GetWorld()->SpawnActor<AProjectile>(ProjectileClass, Start, Rot, Params);
+    if (P)
+    {
+        if (auto* MoveComp = P->FindComponentByClass<UProjectileMovementComponent>())
+        {
+            MoveComp->InitialSpeed = ProjectileSpeed;
+            MoveComp->Velocity = Rot.Vector() * ProjectileSpeed;
+        }
+    }
+}
+
 

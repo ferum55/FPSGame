@@ -84,5 +84,8 @@ public:
 	UFUNCTION() void OnJumpPressed();
 	UFUNCTION() void OnJumpReleased();
 	UFUNCTION() void Fire();
+	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
+		AController* EventInstigator, AActor* DamageCauser) override;
+
 
 };

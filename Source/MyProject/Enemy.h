@@ -4,7 +4,11 @@
 #include "GameFramework/Character.h"
 #include "SpawnEnemyTargetPoint.h"
 #include "Components/WidgetComponent.h"
+#include "TimerManager.h"
 #include "Enemy.generated.h"
+
+class AProjectile;
+
 
 UCLASS()
 class MYPROJECT_API AEnemy : public ACharacter
@@ -45,4 +49,26 @@ protected:
     // --- Віджет ---
     UPROPERTY(VisibleAnywhere, Category = "UI")
     UWidgetComponent* HealthBarWidget;
+
+    // --- Combat ---
+    UPROPERTY(EditAnywhere, Category = "Combat")
+    TSubclassOf<AProjectile> ProjectileClass;
+
+    UPROPERTY(EditAnywhere, Category = "Combat")
+    float AttackRange = 800.f;
+
+    UPROPERTY(EditAnywhere, Category = "Combat")
+    float AttackCooldown = 1.5f;
+
+    UPROPERTY(EditAnywhere, Category = "Combat")
+    float ProjectileSpeed = 1000.f;
+
+    bool bCanAttack = true;
+    FTimerHandle AttackCooldownHandle;
+
+    void TryAttack();
+    void PerformAttack();
+    void ResetAttack();
+    void SpawnProjectileAtPlayer();
+
 };

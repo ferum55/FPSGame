@@ -3,6 +3,7 @@
 
 #include "Projectile.h"
 #include "Enemy.h"
+#include "MainCharacter.h"
 
 // Sets default values
 AProjectile::AProjectile()
@@ -73,19 +74,26 @@ void AProjectile::FireInDirection(const FVector& Direction) {
 	ProjectileMovementComponent->Velocity = Direction * ProjectileMovementComponent->InitialSpeed;
 }
 void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit) {
-	UE_LOG(LogTemp, Error, TEXT("ON HIT WAS CALLED! Target: %s"), OtherActor ? *OtherActor->GetName() : TEXT("NULL"));
+	AController* InstigatorCtrl = GetInstigatorController();
+	UE_LOG(LogTemp, Warning, TEXT("[Projectile] %s fired by %s hitting %s"),
+		*GetName(),
+		InstigatorCtrl ? *InstigatorCtrl->GetName() : TEXT("NoController"),
+		OtherActor ? *OtherActor->GetName() : TEXT("NULL"));
+
 	if (OtherActor && OtherActor != this)
 	{
-		class AEnemy* Enemy = Cast<AEnemy>(OtherActor);
-		if (Enemy)
+		if (AMainCharacter* Player = Cast<AMainCharacter>(OtherActor))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Projectile calling TakeDamage on player"));
+			Player->TakeDamage(Damage, FDamageEvent(), GetInstigatorController(), this);
+		}
+		else if (AEnemy* Enemy = Cast<AEnemy>(OtherActor))
 		{
 			float OldHP = Enemy->GetHealth();
-			float Damage = 20.f; // або винеси в UPROPERTY(EditAnywhere)
 			Enemy->SetHealth(OldHP - Damage);
-
-			UE_LOG(LogTemp, Warning, TEXT("Hit enemy! HP: %.1f -> %.1f"), OldHP, Enemy->GetHealth());
 		}
 	}
+
 	static const float Impulse = 100.0f;
 	if (OtherActor != this && OtherComponent->IsSimulatingPhysics()) {
 		OtherComponent->AddImpulseAtLocation(ProjectileMovementComponent->Velocity * Impulse, Hit.ImpactPoint);

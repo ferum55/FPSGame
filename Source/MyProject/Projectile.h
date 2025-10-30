@@ -30,6 +30,8 @@ protected:
 	float LifeSpan = 0.0f;
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile")
+	float Damage = 20.f;
 
 
 public:	

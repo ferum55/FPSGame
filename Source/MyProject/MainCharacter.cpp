@@ -102,7 +102,6 @@ AMainCharacter::AMainCharacter()
         UE_LOG(LogTemp, Error, TEXT("❌ Failed to find BP_HUD at /Game/UI/BP_HUD.BP_HUD_C"));
     }
 
-
 }
 
 // Called when the game starts or when spawned
@@ -158,6 +157,11 @@ void AMainCharacter::BeginPlay()
         }
     }else UE_LOG(LogTemp, Error, TEXT("HUI"));
 
+    GetCapsuleComponent()->SetCollisionObjectType(ECC_Pawn);
+    GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+    GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
+    GetCapsuleComponent()->SetGenerateOverlapEvents(true);
+    SetCanBeDamaged(true);
 
 }
 
@@ -295,6 +299,26 @@ void AMainCharacter::Fire()
     }
 }
 
+float AMainCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
+    AController* EventInstigator, AActor* DamageCauser)
+{
+    UE_LOG(LogTemp, Warning, TEXT("TakeDamage called"));
 
+    float Actual = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+    if (Actual <= 0.f) return 0.f;
+
+    Health -= Actual;
+    UE_LOG(LogTemp, Warning, TEXT("Player took %.1f damage. HP = %.1f"), Actual, Health);
+
+    if (HUDWidget)
+        HUDWidget->SetHealth(Health / MaxHealth);
+
+    if (Health <= 0.f)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Player died"));
+    }
+
+    return Actual;
+}
 
 
