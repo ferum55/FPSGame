@@ -11,7 +11,7 @@ void UmyHUD::SetAmmo(int32 CurrentAmmo)
     }
     if (AmmoText)
     {
-        AmmoText->SetText(FText::AsNumber(CurrentAmmo));
+        AmmoText->SetText(FText::Format(FText::FromString("Ammo: {0}/30"), FText::AsNumber(CurrentAmmo)));
         UE_LOG(LogTemp, Warning, TEXT("Ammo updated: %d"), CurrentAmmo);
     }
     else
