@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "myHUD.h"
 #include "Projectile.h"
+#include "PhysicsEngine/PhysicsHandleComponent.h"
+
 #include "MainCharacter.generated.h"
 
 class UCameraComponent;
@@ -68,6 +70,16 @@ protected:
 	UPROPERTY(BlueprintReadWrite, Category = "Animation")
 	bool JumpButtonDown;
 
+	UPROPERTY(VisibleAnywhere)
+	UPhysicsHandleComponent* PhysicsHandle;
+
+	UPROPERTY(EditAnywhere)
+	float GrabDistance = 250.f;
+
+	UPROPERTY(EditAnywhere)
+	float HoldDistance = 150.f; 
+
+
 
 public:	
 	virtual void Tick(float DeltaTime) override;
@@ -82,6 +94,14 @@ public:
 	UFUNCTION() void OnJumpPressed();
 	UFUNCTION() void OnJumpReleased();
 	UFUNCTION() void Fire();
+	UFUNCTION(BlueprintCallable, Category = "Stats")
+	void AddHealth(float Amount);
+	UFUNCTION(BlueprintCallable, Category = "Stats")
+	void AddAmmo(int32 Amount);
+
+	void Grab();
+	void Release();
+
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
 		AController* EventInstigator, AActor* DamageCauser) override;
 

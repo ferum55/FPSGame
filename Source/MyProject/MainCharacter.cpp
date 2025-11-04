@@ -95,6 +95,7 @@ AMainCharacter::AMainCharacter()
     {
         UE_LOG(LogTemp, Error, TEXT("❌ Failed to find BP_HUD at /Game/UI/BP_HUD.BP_HUD_C"));
     }
+    PhysicsHandle = CreateDefaultSubobject<UPhysicsHandleComponent>(TEXT("PhysicsHandle"));
 
 }
 
@@ -168,7 +169,11 @@ void AMainCharacter::Tick(float DeltaTime)
             Anim->AimPitch = FRotator::NormalizeAxis(ControlRot.Pitch);
         }
     }
-
+    if (PhysicsHandle->GrabbedComponent)
+    {
+        FVector TargetLocation = Camera->GetComponentLocation() + (Camera->GetForwardVector() * HoldDistance);
+        PhysicsHandle->SetTargetLocation(TargetLocation);
+    }
 }
 
 // Called to bind functionality to input
@@ -188,6 +193,9 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
     PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &AMainCharacter::BeginCrouch);
     PlayerInputComponent->BindAction("Crouch", IE_Released, this, &AMainCharacter::EndCrouch);
     PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &AMainCharacter::Fire);
+    PlayerInputComponent->BindAction("Grab", IE_Pressed, this, &AMainCharacter::Grab);
+    PlayerInputComponent->BindAction("Grab", IE_Released, this, &AMainCharacter::Release);
+
 }
 
 
@@ -248,8 +256,6 @@ void AMainCharacter::OnJumpReleased()
     JumpButtonDown = false;
 }
 
-
-
 void AMainCharacter::Fire()
 {
 
@@ -292,13 +298,11 @@ void AMainCharacter::Fire()
 float AMainCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
     AController* EventInstigator, AActor* DamageCauser)
 {
-    UE_LOG(LogTemp, Warning, TEXT("TakeDamage called"));
 
     float Actual = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
     if (Actual <= 0.f) return 0.f;
 
     Health -= Actual;
-    UE_LOG(LogTemp, Warning, TEXT("Player took %.1f damage. HP = %.1f"), Actual, Health);
     Camera->PostProcessSettings.bOverride_SceneColorTint = true;
     Camera->PostProcessSettings.SceneColorTint = FLinearColor(1.f, 0.f, 0.f, 1.f); 
 
@@ -317,6 +321,53 @@ float AMainCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
     }
 
     return Actual;
+}
+
+#include "DrawDebugHelpers.h"
+
+void AMainCharacter::Grab()
+{
+    FVector Start = Camera->GetComponentLocation();
+    FVector End = Start + (Camera->GetForwardVector() * GrabDistance);
+
+    FHitResult Hit;
+    FCollisionQueryParams Params;
+    Params.AddIgnoredActor(this);
+
+    bool bHit = GetWorld()->LineTraceSingleByChannel(
+        Hit, Start, End, ECC_PhysicsBody, Params);
+
+    if (bHit && Hit.GetActor())
+    {
+        UPrimitiveComponent* HitComp = Hit.GetComponent();
+        if (HitComp && HitComp->IsSimulatingPhysics())
+        {
+            PhysicsHandle->GrabComponentAtLocation(
+                HitComp, NAME_None, HitComp->GetCenterOfMass());
+        }
+    }
+}
+
+void AMainCharacter::Release()
+{
+    if (PhysicsHandle->GrabbedComponent)
+    {
+        PhysicsHandle->ReleaseComponent();
+    }
+}
+
+void AMainCharacter::AddHealth(float Amount)
+{
+    Health = FMath::Clamp(Health + Amount, 0.f, MaxHealth);
+    if (HUDWidget)
+        HUDWidget->SetHealth(Health / MaxHealth);
+}
+
+void AMainCharacter::AddAmmo(int32 Amount)
+{
+    Ammo = FMath::Clamp(Ammo + Amount, 0, MaxAmmo);
+    if (HUDWidget)
+        HUDWidget->SetAmmo(Ammo);
 }
 
 
